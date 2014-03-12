@@ -31,21 +31,27 @@ public class ReductMax {
 
         return max;
     }
+    //replacing clusters of same sign numbers with sum of these numbers
+    //[5,2,-1,-3,-4,1,-2] => [7,-7,1,-2] 
+    public static ArrayList<Integer> removeClusters(ArrayList<Integer> inputArray) {
+        Iterator it = inputArray.iterator();
+        int previous = (int) it.next();
+        int index = 0;
+        while (it.hasNext()) {
+            int current = (int) it.next();
+            index++;
+            if (previous * current >= 0) {
+                inputArray.set(index-1, current + previous);
+                it.remove();
+                index--;
+            }
+            previous = inputArray.get(index);
+        }
+        return inputArray;
+    }
 
     public static int mojAlg(ArrayList<Integer> inputArray) {
-        
-        int previous = inputArray.get(0);
-        //replacing sequencies of same sign numbers with sum of these numbers
-        //[5,2,-1,-3,-4,1,-2] => [7,-7,1,-2] 
-        for (int i = 1; i < inputArray.size(); i++) {
-            int current = inputArray.get(i);
-            if (previous * current >= 0) {
-                inputArray.set(i, current + previous);
-                inputArray.remove(i - 1);
-                i--;
-            }
-            previous = inputArray.get(i);
-        }
+        removeClusters(inputArray);
         //removing negative numbers from begin or end of array
         if (!inputArray.isEmpty() && inputArray.get(inputArray.size() - 1).compareTo(0) < 0) {
             inputArray.remove(inputArray.size() - 1);
@@ -71,28 +77,21 @@ public class ReductMax {
         int firstElementOfSequence = inputArray.get(0);
         //memorize highest maximum of sequncies seen so far
         int tempMax = firstElementOfSequence;
-        for (int i = 2; i < inputArray.size(); i += 2) {
+        for (int i = 2; i <= inputArray.size(); i += 2) {
             //take sum of next pair (should be in form: -,+)
             int nextPairSum = inputArray.get(i) + inputArray.get(i - 1);
-            //if this sum is greater then positive element of pair
-            if (nextPairSum >= 0 && firstElementOfSequence + nextPairSum > inputArray.get(i)) {
+            //if sequence extended for this pair is greater then positive element of pair
+
+            if (firstElementOfSequence + nextPairSum > inputArray.get(i)) {
                 //exceed sequence by including that pair in firstElement [+,-,+] => [+]
                 firstElementOfSequence += nextPairSum;
-            } else {//otherwise, nextPair is negative, possible break of sequence
-                //first, check if this sequence is greater then max
-                if (tempMax < firstElementOfSequence) {
-                    tempMax = firstElementOfSequence;
-                }
-                //second, check if sequence should be broken
-                //by cheking if sequence "+" nextPairSum is greater then positive number in pair
-                //quotes are cause this isn't add opperation, it's substraction
-                if (firstElementOfSequence + nextPairSum > inputArray.get(i)) {
-                    //this is case when it's better to exceed with sequence
-                    firstElementOfSequence = firstElementOfSequence + nextPairSum;
-                } else {
-                    //break sequence by setting start of new one
-                    firstElementOfSequence = inputArray.get(i);
-                }
+            } else {//otherwise, start new sequence
+                //break sequence by setting start of new one
+                firstElementOfSequence = inputArray.get(i);
+            }
+            //check if this sequence is greater then max
+            if (tempMax < firstElementOfSequence) {
+                tempMax = firstElementOfSequence;
             }
             //idea of this algorithm is scanning reduced array from left to right
             //forming triples [+L,-M,+R] and reducing theese triples to one number
@@ -100,10 +99,6 @@ public class ReductMax {
             //2: [+R] +R > sumOfTriple
             //theese triples when reduced to newL form next iteration's triple [+newL,-M,+R] etc.
             //tmpMax holds greatest value of all broken sequnces (of triples)
-        }
-        //finally, check if last element of array is greater then current sequence
-        if (firstElementOfSequence < inputArray.get(inputArray.size() - 1)) {
-            firstElementOfSequence = inputArray.get(inputArray.size() - 1);
         }
         //comparing tempMax and last sequence
         if (tempMax < firstElementOfSequence) {
@@ -121,25 +116,35 @@ public class ReductMax {
         return list;
     }
 
+    public static ArrayList<Integer> createInput2(int size, int amplitude) {
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            int temp = (int) (Math.ceil((Math.random() * amplitude) / 2) * Math.pow(-1, i));
+            list.add(temp);
+        }
+        return list;
+    }
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         int count = 0;
         int numberOfTests = 1;
+
         for (int i = 0; i < numberOfTests; i++) {
-            ArrayList<Integer> inputArray = createInput(100000, 20);
-            
+            ArrayList<Integer> inputArray = createInput2(100000, 20);
             long startTime1 = System.currentTimeMillis();
             int rezKvadr = kvadratni(inputArray);
             long estimatedTime1 = System.currentTimeMillis() - startTime1;
             long startTime2 = System.currentTimeMillis();
             int rezMoj = mojAlg(inputArray);
             long estimatedTime2 = System.currentTimeMillis() - startTime2;
-            
+
             System.out.println(estimatedTime1 + "-----------" + estimatedTime2);
             if (rezKvadr == rezMoj) {
                 count++;
+                //  System.out.println(rezKvadr + " - " + rezMoj);
             } else {
                 System.out.println(rezKvadr + " - " + rezMoj);
             }
